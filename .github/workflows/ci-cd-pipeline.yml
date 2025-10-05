@@ -78,27 +78,28 @@ jobs:
     needs: build-and-publish
 
     steps:
-    - name: 🗝️ Prepare SSH Key
-      run: |
-        echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key.pem
-        chmod 600 private_key.pem
-        echo "✅ SSH key prepared"
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: 🔐 Decode SSH Key
+        run: |
+          echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > private_key.pem
+          chmod 600 private_key.pem
+          echo "✅ SSH key decoded successfully"
+        env:
+          SSH_PRIVATE_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
 
-    - name: 🚀 Deploy to AWS EC2
-      uses: appleboy/ssh-action@v1.1.0
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key_path: private_key.pem   # ✅ Use file path instead of key string
-        script: |
-          echo "🔄 Pulling latest Docker image..."
-          docker pull abdullahalbaki/flask-test-app:latest
+      - name: 🚀 Deploy to AWS EC2
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key_path: private_key.pem
+          script: |
+            echo "🔄 Pulling latest Docker image..."
+            docker pull abdullahalbaki/flask-test-app:latest
 
-          echo "🧹 Stopping old container..."
-          docker stop flask-test-app || true
-          docker rm flask-test-app || true
+            echo "🧹 Stopping old container..."
+            docker stop flask-test-app || true
+            docker rm flask-test-app || true
 
-          echo "🚀 Running new container..."
-          docker run -d -p 5000:5000 --name flask-test-app abdullahalbaki/flask-test-app:latest
+            echo "🚀 Running new container..."
+            docker run -d -p 5000:5000 --name flask-test-app abdullahalbaki/flask-test-app:latest
+
