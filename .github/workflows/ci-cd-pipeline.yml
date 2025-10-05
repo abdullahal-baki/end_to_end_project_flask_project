@@ -69,6 +69,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-test-app:latest
 
-      
+
       - name: Get image digest
         run: echo ${{ steps.build-and-publish.outputs.digest }}
